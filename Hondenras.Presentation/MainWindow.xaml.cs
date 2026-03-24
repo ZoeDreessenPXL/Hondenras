@@ -10,6 +10,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Hondenras.Application.Services;
+using Hondenras.Domain.Models;
 
 namespace Hondenras.Presentation
 {
@@ -18,16 +19,42 @@ namespace Hondenras.Presentation
     /// </summary>
     public partial class MainWindow : Window
     {
+        DogService _dogService;
+
         public MainWindow()
         {
             InitializeComponent();
+            _dogService = new DogService();
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            DogService service = new DogService();
-            await service.GetData();
-            dogBreedComboBox.ItemsSource = service.Breeds;
+            await _dogService.InitializeAsync();
+            breedComboBox.ItemsSource = _dogService.Breeds;
+            await LoadNextDog();
+        }
+
+        private async Task LoadNextDog()
+        {
+            string imageUrl = await _dogService.GetNextDogImageAsync();
+            dogImage.Source = new BitmapImage(new Uri(imageUrl));
+        }
+
+        private void GuessButton_Click(object sender, RoutedEventArgs e)
+        {
+            if(!_dogService.Guess((DogBreed)breedComboBox.SelectedItem))
+            {
+                feedbackTextBlock.Text = $"Fout! Het is een {_dogService.CurrentBreed}";
+            }
+            else
+            {
+                feedbackTextBlock.Text = "Juist!";
+            }
+        }
+
+        private async void NextButton_Click(object sender, RoutedEventArgs e)
+        {
+            await LoadNextDog();
         }
     }
 }

@@ -11,16 +11,16 @@ namespace Hondenras.Infrastructure.Repositories
 {
     public class DogRepository
     {
-        public async Task<List<DogBreed>> GetData()
+        public async Task<List<DogBreed>> GetAllBreedsAsync()
         {
             List<DogBreed> breeds = new List<DogBreed>();
 
             HttpClient httpClient = new HttpClient();
             string content = await httpClient.GetStringAsync("https://dog.ceo/api/breeds/list/all");
 
-            var test = JsonSerializer.Deserialize<DogBreedsResponse>(content, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
+            var breedsResponse = JsonSerializer.Deserialize<DogBreedsResponse>(content, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true });
 
-            foreach(var breed in test.Message)
+            foreach(var breed in breedsResponse.Message)
             {
                 if (breed.Value.Count > 0)
                 {
@@ -36,6 +36,20 @@ namespace Hondenras.Infrastructure.Repositories
             }
 
             return breeds;
+        }
+
+        public async Task<string> GetRandomImageUrlByBreedAsync(DogBreed breed)
+        {
+            string url = @$"https://dog.ceo/api/breed/{breed.Name}/images/random";
+            if (!string.IsNullOrWhiteSpace(breed.SubBreed))
+            {
+                url = @$"https://dog.ceo/api/breed/{breed.Name}/{breed.SubBreed}/images/random";
+            }
+
+            HttpClient client = new HttpClient();
+            string imageUrl = await client.GetStringAsync(url);
+
+            return JsonSerializer.Deserialize<DogImageResponse>(imageUrl, new JsonSerializerOptions() { PropertyNameCaseInsensitive = true }).Message;
         }
     }
 }
